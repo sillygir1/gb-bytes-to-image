@@ -2,7 +2,7 @@
 
 Usage:
 
-```c
+```
 bytes_to_image filename [option] start_address arg2
   option:
     -n  Read n (hexadecimal) bytes starting address start_address

@@ -128,6 +128,7 @@ int main(int argc, char *argv[]) {
 	printf("\nColor palette:\n ░▒▓\n");
 	draw_sprite(buff_image, end / 2, 8, 8);
 
+	free(filename);
 	free(buff);
 	fclose(file);
 	return 0;

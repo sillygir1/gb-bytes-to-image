@@ -1,8 +1,11 @@
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "bytes_to_image.h"
+
+uint32_t start = 0;
+uint32_t end = 0;
+char *filename;
+uint8_t *bytes_input;
+
+uint8_t colors[4] = {0x00, 0x67, 0xb6, 0xff};
 
 // Gonna think about that one later, useless for now
 void swap(uint16_t *x, uint16_t *y) {
@@ -11,11 +14,21 @@ void swap(uint16_t *x, uint16_t *y) {
 	*y = temp;
 } // Works i suppose
 
-// Read *end* bytes to buffer from file starting from start
+// Read *end* bytes to buffer from file starting from *start*
 uint32_t read(FILE *file, uint8_t *buff, uint32_t end, uint32_t start) {
 	fseek(file, start, 0);
 	return fread(buff, 1, end, file);
 } // Done
+
+// A bit useless but works, so whatever
+uint32_t read_bytes(uint8_t *bytes, uint8_t *buff, uint8_t w, uint8_t h) {
+	uint32_t read = 0;
+	for (uint32_t i = 0; i < w * h / 8 * 2; i++) {
+		buff[i] = bytes[i];
+		read += 1;
+	}
+	return read;
+}
 
 // Sprites' pixels are stored in pairs of bytes, each two bytes
 // representing 8 grayscale 2-bit pixels.
@@ -33,7 +46,7 @@ uint16_t join_bytes(uint8_t byte1, uint8_t byte2) {
 	return out;
 } // Done
 
-void draw_sprite(uint16_t *pixels, uint16_t size, uint8_t w, uint8_t h) {
+void print_sprite(uint16_t *pixels, uint16_t size) {
 	// Printing image:
 	printf("Image:\n");
 	for (uint16_t i = 0; i < size; i++) {
@@ -58,10 +71,6 @@ void draw_sprite(uint16_t *pixels, uint16_t size, uint8_t w, uint8_t h) {
 	}
 } // Done
 
-uint32_t start = 0;
-uint32_t end = 0;
-char *filename;
-
 void help() {
 	printf("usage: bytes_to_image filename [option] start_address arg2 \n");
 	printf("  option:\n");
@@ -85,12 +94,32 @@ uint8_t parse_arguments(int argc, char *argv[]) {
 			end = (int)strtol(argv[4], NULL, 16);
 		} else if (strcmp(argv[2], "-r") == 0) { // Range
 			end = (int)strtol(argv[4], NULL, 16) - start + 1;
+		} else if (strcmp(argv[1], "-b") == 0) {
+			end = (int)strtol(argv[2], NULL, 16);
+			bytes_input = malloc(sizeof(uint8_t) * end);
+			for (int i = 0; i < end; i++) {
+				bytes_input[i] = strtol(argv[i + 3], NULL, 16);
+			}
 		}
 	} else {
 		help();
 		return false;
 	}
 	return true;
+}
+
+void show_sprite() {
+	// Init window
+	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+		// throw some error idk
+	}
+	SDL_Window *window = SDL_CreateWindow(
+	    "gb_emu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640,
+	    480, SDL_WINDOW_SHOWN | SDL_WINDOW_UTILITY);
+	SDL_Renderer *renderer =
+	    SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+	SDL_Rect r;
 }
 
 int main(int argc, char *argv[]) {
@@ -108,9 +137,17 @@ int main(int argc, char *argv[]) {
 	uint16_t *buff_image = malloc(sizeof(uint16_t) * end);
 
 	// Reading from file
-	uint32_t bytes = read(file, buff, end, start);
+	uint32_t bytes = 0;
+	if (strcmp(argv[1], "-b") == 0)
+		bytes = read_bytes(bytes_input, buff, 8, 8);
+	else
+		bytes = read(file, buff, end, start);
+
 	if (bytes != 0) {
-		printf("Read %d bytes starting 0x%x:\n", bytes, start);
+		if (strcmp(argv[1], "-b") == 0)
+			printf("Read %d bytes:\n", bytes);
+		else
+			printf("Read %d bytes:\n", bytes, start);
 		for (uint32_t i = 0; i < bytes; i++) {
 			printf("0x%x, ", buff[i]);
 		}
@@ -126,10 +163,15 @@ int main(int argc, char *argv[]) {
 	}
 
 	printf("\nColor palette:\n ░▒▓\n");
-	draw_sprite(buff_image, end / 2, 8, 8);
+	if (strcmp(argv[1], "-b") == 0)
+		print_sprite(buff_image, end / 2);
+	else
+		print_sprite(buff_image, end / 2);
 
-	free(filename);
+	// free(filename);
+	free(bytes_input);
 	free(buff);
-	fclose(file);
+	if (file)
+		fclose(file);
 	return 0;
 }

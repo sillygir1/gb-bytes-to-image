@@ -1,1 +1,1 @@
-# Convert gameboy/pokewalker byte array into images
+## Convert gameboy/pokewalker byte arrays into images

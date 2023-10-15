@@ -72,7 +72,8 @@ void print_sprite(uint16_t *pixels, uint16_t size) {
 } // Done
 
 void help() {
-	printf("usage: bytes_to_image filename [option] start_address arg2 \n");
+	printf("usage:\nbytes_to_image -b length (hexadecimal) [bytes...]\n");
+	printf("bytes_to_image filename [option] start_address arg2 \n");
 	printf("  option:\n");
 	printf("    -n\tRead n (hexadecimal) bytes starting address "
 	       "start_address\n");

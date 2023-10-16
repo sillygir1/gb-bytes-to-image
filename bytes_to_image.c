@@ -28,7 +28,7 @@ uint32_t read_bytes(uint8_t *bytes, uint8_t *buff, uint8_t w, uint8_t h,
 	return read;
 }
 
-// Sprites' pixels are stored in pairs of bytes, each two bytes
+// Tiles' pixels are stored in pairs of bytes, each two bytes
 // representing 8 grayscale 2-bit pixels.
 // First byte represents least significant bits of
 // pixels, second - most significant.
@@ -52,8 +52,8 @@ void join_all(uint8_t *input_buff, uint16_t *output_buff, uint32_t length) {
 	}
 }
 
-// Print sprite into stdout
-void print_sprite(uint16_t *pixels, uint16_t size) {
+// Print tiles into stdout
+void print_tiles(uint16_t *pixels, uint16_t size) {
 	// Printing image:
 	printf("Image:\n");
 	for (uint16_t i = 0; i < size; i++) {
@@ -155,7 +155,7 @@ void create_texture(uint16_t *input_buff, SDL_Texture *texture) {
 	SDL_UnlockTexture(texture);
 }
 
-void show_sprite(uint16_t *input_buff) {
+void show_tile(uint16_t *input_buff) {
 	// Init window
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		printf("Failed to initialize the SDL2 library\n");
@@ -163,7 +163,7 @@ void show_sprite(uint16_t *input_buff) {
 	}
 	// Create window
 	SDL_Window *window = SDL_CreateWindow(
-	    "sprite_display", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+	    "tile_display", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 	    width * pixel_scale, height * pixel_scale,
 	    SDL_WINDOW_SHOWN | SDL_WINDOW_UTILITY);
 	// Create renderer
@@ -263,12 +263,12 @@ int main(int argc, char *argv[]) {
 
 	printf("\nColor palette:\n ░▒▓\n");
 
-	// Print sprite to stdout
-	print_sprite(buff_image, end / 2);
+	// Print tile to stdout
+	print_tiles(buff_image, end / 2);
 
-	// Draw if just 8x8 sprite is read
+	// Draw if just 8x8 tile is read
 	if (end / 2 == 8)
-		show_sprite(buff_image);
+		show_tile(buff_image);
 
 	// Freeing everything
 	if (filename)

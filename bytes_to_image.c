@@ -1,5 +1,9 @@
 #include "bytes_to_image.h"
 
+#define width 8	       // px
+#define height 8       // px
+#define pixel_scale 40 // ratio of gameboy to screen
+
 uint32_t start = 0;
 uint32_t end = 0;
 char *filename;
@@ -7,15 +11,8 @@ uint8_t *bytes_input;
 
 uint8_t colors[4] = {0x00, 0x67, 0xb6, 0xff};
 
-// Gonna think about that one later, useless for now
-void swap(uint16_t *x, uint16_t *y) {
-	int temp = *x;
-	*x = *y;
-	*y = temp;
-} // Works i suppose
-
 // Read *end* bytes to buffer from file starting from *start*
-uint32_t read(FILE *file, uint8_t *buff, uint32_t end, uint32_t start) {
+uint32_t read_(FILE *file, uint8_t *buff, uint32_t end, uint32_t start) {
 	fseek(file, start, 0);
 	return fread(buff, 1, end, file);
 } // Done
@@ -32,8 +29,8 @@ uint32_t read_bytes(uint8_t *bytes, uint8_t *buff, uint8_t w, uint8_t h) {
 
 // Sprites' pixels are stored in pairs of bytes, each two bytes
 // representing 8 grayscale 2-bit pixels.
-// First byte represents most significant bits of
-// pixels, second - least significant.
+// First byte represents least significant bits of
+// pixels, second - most significant.
 // This function joins bytes to get 1 16-bit
 // value for the row of 8 pixels
 uint16_t join_bytes(uint8_t byte1, uint8_t byte2) {
@@ -57,7 +54,7 @@ void print_sprite(uint16_t *pixels, uint16_t size) {
 	// Printing image:
 	printf("Image:\n");
 	for (uint16_t i = 0; i < size; i++) {
-		if (i % 8 == 0)
+		if (i % 8 == 0 && i != 0)
 			printf("\n");
 		// Printing single line:
 		for (uint8_t j = 0; j < 8; j++) {
@@ -108,10 +105,10 @@ uint8_t parse_arguments(int argc, char *argv[]) {
 		} else if (strcmp(argv[2], "-r") == 0) { // Read range
 			end = (int)strtol(argv[4], NULL, 16) - start + 1;
 		} else if (strcmp(argv[1], "-b") == 0) { // Read bytes
-			if (argv[4][0] == '0' && argv[4][1] == 'x')
-				end = (int)strtol(argv[4], NULL, 16);
+			if (argv[2][0] == '0' && argv[2][1] == 'x')
+				end = (int)strtol(argv[2], NULL, 16);
 			else
-				end = (int)strtol(argv[4], NULL, 10);
+				end = (int)strtol(argv[2], NULL, 10);
 			bytes_input = malloc(sizeof(uint8_t) * end);
 			for (int i = 0; i < end; i++) {
 				bytes_input[i] = strtol(argv[i + 3], NULL, 16);
@@ -127,18 +124,78 @@ uint8_t parse_arguments(int argc, char *argv[]) {
 	return true;
 }
 
-void show_sprite() {
+void show_sprite(uint16_t *input_buff) {
 	// Init window
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-		// throw some error idk
+		// printf("Failed to initialize the SDL2 library\n");
+		// return;
 	}
 	SDL_Window *window = SDL_CreateWindow(
-	    "gb_emu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640,
-	    480, SDL_WINDOW_SHOWN | SDL_WINDOW_UTILITY);
+	    "sprite_display", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+	    width * pixel_scale, height * pixel_scale,
+	    SDL_WINDOW_SHOWN | SDL_WINDOW_UTILITY);
 	SDL_Renderer *renderer =
 	    SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-	SDL_Rect r;
+	SDL_Texture *texture =
+	    SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
+			      SDL_TEXTUREACCESS_STREAMING, 8, 8);
+
+	uint8_t *pixels;
+	int pitch;
+
+	SDL_LockTexture(texture, NULL, (void **)&pixels, &pitch);
+
+	for (uint8_t i = 0; i < 8; i++) {
+		for (uint8_t j = 0; j < 8; j++) {
+			for (uint8_t k = 0; k < 4; k++) {
+				if (k != 0)
+					pixels[k + 4 * (8 * i + j)] =
+					    colors[(input_buff[i] &
+						    (0b11 << (j * 2))) >>
+						   (j * 2)];
+				else
+					pixels[k + 4 * (8 * i + j)] = 0;
+			}
+		}
+	}
+
+	SDL_UnlockTexture(texture);
+
+	unsigned int a = SDL_GetTicks();
+	unsigned int b = SDL_GetTicks();
+	double delta = 0;
+
+	SDL_Rect dst;
+	dst.x = 0;
+	dst.y = 0;
+	dst.w = pixel_scale * 8;
+	dst.h = pixel_scale * 8;
+
+	bool keep_window_open = true;
+	while (keep_window_open) {
+
+		SDL_Event e;
+		while (SDL_PollEvent(&e) > 0) {
+			switch (e.type) {
+			case SDL_QUIT:
+				keep_window_open = false;
+				break;
+			}
+		}
+
+		a = SDL_GetTicks();
+		delta = a - b;
+
+		if (delta > 1000 / 60.0) {
+			SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+			SDL_RenderClear(renderer);
+
+			SDL_RenderCopy(renderer, texture, NULL, &dst);
+
+			SDL_RenderPresent(renderer);
+		}
+	}
 }
 
 int main(int argc, char *argv[]) {
@@ -160,7 +217,7 @@ int main(int argc, char *argv[]) {
 	if (strcmp(argv[1], "-b") == 0)
 		bytes = read_bytes(bytes_input, buff, 8, 8);
 	else
-		bytes = read(file, buff, end, start);
+		bytes = read_(file, buff, end, start);
 
 	if (bytes != 0) {
 		if (strcmp(argv[1], "-b") == 0)
@@ -184,10 +241,11 @@ int main(int argc, char *argv[]) {
 	}
 
 	printf("\nColor palette:\n ░▒▓\n");
-	if (strcmp(argv[1], "-b") == 0)
-		print_sprite(buff_image, end / 2);
-	else
-		print_sprite(buff_image, end / 2);
+
+	print_sprite(buff_image, end / 2);
+
+	if (end / 2 == 8)
+		show_sprite(buff_image);
 
 	// free(filename);
 	free(bytes_input);

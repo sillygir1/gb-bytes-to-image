@@ -41,7 +41,7 @@ uint16_t join_bytes(uint8_t byte1, uint8_t byte2) {
 	for (uint8_t i = 0; i < 8; i++) {
 		out += ((((byte1 & (1 << i)) >> (i)) << 1) +
 			((byte2 & (1 << i)) >> (i)))
-		       << (2 * i);
+		       << (14 - 2 * i);
 	}
 	return out;
 } // Done

@@ -127,8 +127,8 @@ uint8_t parse_arguments(int argc, char *argv[]) {
 void show_sprite(uint16_t *input_buff) {
 	// Init window
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-		// printf("Failed to initialize the SDL2 library\n");
-		// return;
+		printf("Failed to initialize the SDL2 library\n");
+		return;
 	}
 	SDL_Window *window = SDL_CreateWindow(
 	    "sprite_display", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,

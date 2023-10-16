@@ -46,10 +46,19 @@ uint16_t join_bytes(uint8_t byte1, uint8_t byte2) {
 	return out;
 } // Done
 
+void join_all(uint8_t *input_buff, uint16_t *output_buff, uint32_t length) {
+	for (uint32_t i = 0; i < length; i++) {
+		output_buff[i] =
+		    join_bytes(input_buff[2 * i], input_buff[2 * i + 1]);
+	}
+}
+
 void print_sprite(uint16_t *pixels, uint16_t size) {
 	// Printing image:
 	printf("Image:\n");
 	for (uint16_t i = 0; i < size; i++) {
+		if (i % 8 == 0)
+			printf("\n");
 		// Printing single line:
 		for (uint8_t j = 0; j < 8; j++) {
 			switch ((pixels[i] & (0b11 << (j * 2))) >> (j * 2)) {
@@ -72,10 +81,10 @@ void print_sprite(uint16_t *pixels, uint16_t size) {
 } // Done
 
 void help() {
-	printf("usage:\nbytes_to_image -b length (hexadecimal) [bytes...]\n");
+	printf("usage:\nbytes_to_image -b length [bytes...]\n");
 	printf("bytes_to_image filename [option] start_address arg2 \n");
 	printf("  option:\n");
-	printf("    -n\tRead n (hexadecimal) bytes starting address "
+	printf("    -n\tRead arg2 bytes starting address "
 	       "start_address\n");
 	printf("    -r\tRead range start_address to arg2\n");
 	printf("    -h\tHelp\n");
@@ -91,16 +100,25 @@ uint8_t parse_arguments(int argc, char *argv[]) {
 		} else {
 			filename = argv[1];
 		}
-		if (strcmp(argv[2], "-n") == 0) { // N bytes
-			end = (int)strtol(argv[4], NULL, 16);
-		} else if (strcmp(argv[2], "-r") == 0) { // Range
+		if (strcmp(argv[2], "-n") == 0) { // Read n bytes
+			if (argv[4][0] == '0' && argv[4][1] == 'x')
+				end = (int)strtol(argv[4], NULL, 16);
+			else
+				end = (int)strtol(argv[4], NULL, 10);
+		} else if (strcmp(argv[2], "-r") == 0) { // Read range
 			end = (int)strtol(argv[4], NULL, 16) - start + 1;
-		} else if (strcmp(argv[1], "-b") == 0) {
-			end = (int)strtol(argv[2], NULL, 16);
+		} else if (strcmp(argv[1], "-b") == 0) { // Read bytes
+			if (argv[4][0] == '0' && argv[4][1] == 'x')
+				end = (int)strtol(argv[4], NULL, 16);
+			else
+				end = (int)strtol(argv[4], NULL, 10);
 			bytes_input = malloc(sizeof(uint8_t) * end);
 			for (int i = 0; i < end; i++) {
 				bytes_input[i] = strtol(argv[i + 3], NULL, 16);
 			}
+		} else {
+			help();
+			return false;
 		}
 	} else {
 		help();
@@ -158,9 +176,11 @@ int main(int argc, char *argv[]) {
 	}
 
 	printf("Joined bytes:\n");
+
+	join_all(buff, buff_image, end / 2);
+
 	for (uint32_t i = 0; i < end / 2; i++) {
-		buff_image[i] = join_bytes(buff[2 * i], buff[2 * i + 1]);
-		printf("0x%x, ", buff_image[i]);
+		printf("0x%04x, ", buff_image[i]);
 	}
 
 	printf("\nColor palette:\n ░▒▓\n");

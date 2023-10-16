@@ -100,7 +100,7 @@ uint8_t parse_arguments(int argc, char *argv[]) {
 			help();
 			return false;
 		} else {
-			strncpy(filename, argv[1], strlen(argv[1]));
+			strncpy(filename, argv[1], 64);
 			// filename = argv[1];
 		}
 		if (strcmp(argv[2], "-n") == 0) { // Read n bytes

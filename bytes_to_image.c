@@ -44,7 +44,7 @@ uint16_t join_bytes(uint8_t byte1, uint8_t byte2) {
 	return out;
 } // Done
 
-// Join into length bytes
+// Join into length values
 void join_all(uint8_t *input_buff, uint16_t *output_buff, uint32_t length) {
 	for (uint32_t i = 0; i < length; i++) {
 		output_buff[i] =
@@ -215,6 +215,19 @@ void show_tile(uint16_t *input_buff) {
 			SDL_RenderPresent(renderer);
 		}
 	}
+}
+
+// for external usage
+bool get_tile(uint8_t *input_buff, SDL_Texture *texture,
+	      uint32_t start_offset) {
+	uint8_t buff[16];
+	uint16_t tile_buff[8];
+	if (!read_bytes(input_buff, buff, 8, 8, start_offset)) {
+		return false;
+	}
+	join_all(buff, tile_buff, 8);
+	create_texture(tile_buff, texture);
+	return true;
 }
 
 int main(int argc, char *argv[]) {

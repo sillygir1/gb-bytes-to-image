@@ -17,11 +17,12 @@ uint32_t read_(FILE *file, uint8_t *buff, uint32_t end, uint32_t start) {
 	return fread(buff, 1, end, file);
 } // Done
 
-// A bit useless but works, so whatever
-uint32_t read_bytes(uint8_t *bytes, uint8_t *buff, uint8_t w, uint8_t h) {
+// Read w*h bytes from buffer into another buffer
+uint32_t read_bytes(uint8_t *bytes, uint8_t *buff, uint8_t w, uint8_t h,
+		    uint32_t start_offset) {
 	uint32_t read = 0;
 	for (uint32_t i = 0; i < w * h / 8 * 2; i++) {
-		buff[i] = bytes[i];
+		buff[i] = bytes[start_offset + i];
 		read += 1;
 	}
 	return read;
@@ -43,6 +44,7 @@ uint16_t join_bytes(uint8_t byte1, uint8_t byte2) {
 	return out;
 } // Done
 
+// Join into length bytes
 void join_all(uint8_t *input_buff, uint16_t *output_buff, uint32_t length) {
 	for (uint32_t i = 0; i < length; i++) {
 		output_buff[i] =
@@ -50,6 +52,7 @@ void join_all(uint8_t *input_buff, uint16_t *output_buff, uint32_t length) {
 	}
 }
 
+// Print sprite into stdout
 void print_sprite(uint16_t *pixels, uint16_t size) {
 	// Printing image:
 	printf("Image:\n");
@@ -77,6 +80,7 @@ void print_sprite(uint16_t *pixels, uint16_t size) {
 	}
 } // Done
 
+// Print help
 void help() {
 	printf("usage:\nbytes_to_image -b length [bytes...]\n");
 	printf("bytes_to_image filename [option] start_address arg2 \n");
@@ -87,6 +91,7 @@ void help() {
 	printf("    -h\tHelp\n");
 }
 
+// Parse arguments
 uint8_t parse_arguments(int argc, char *argv[]) {
 	if (argc > 1) {
 		start = (int)strtol(argv[3], NULL, 16);
@@ -95,7 +100,8 @@ uint8_t parse_arguments(int argc, char *argv[]) {
 			help();
 			return false;
 		} else {
-			filename = argv[1];
+			strncpy(filename, argv[1], strlen(argv[1]));
+			// filename = argv[1];
 		}
 		if (strcmp(argv[2], "-n") == 0) { // Read n bytes
 			if (argv[4][0] == '0' && argv[4][1] == 'x')
@@ -113,23 +119,25 @@ uint8_t parse_arguments(int argc, char *argv[]) {
 			for (int i = 0; i < end; i++) {
 				bytes_input[i] = strtol(argv[i + 3], NULL, 16);
 			}
-		} else {
+		} else { // Print help if no valid key
 			help();
 			return false;
 		}
-	} else {
+	} else { // Print help if no arguments
 		help();
 		return false;
 	}
 	return true;
 }
 
+// Create a texture out of array of pixels
 void create_texture(uint16_t *input_buff, SDL_Texture *texture) {
 	uint8_t *pixels;
 	int pitch;
 
 	SDL_LockTexture(texture, NULL, (void **)&pixels, &pitch);
 
+	// Turning every very 2-bit pixel into 4 RGBA bytes
 	for (uint8_t i = 0; i < 8; i++) {
 		for (uint8_t j = 0; j < 8; j++) {
 			for (uint8_t k = 0; k < 4; k++) {
@@ -153,31 +161,36 @@ void show_sprite(uint16_t *input_buff) {
 		printf("Failed to initialize the SDL2 library\n");
 		return;
 	}
+	// Create window
 	SDL_Window *window = SDL_CreateWindow(
 	    "sprite_display", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 	    width * pixel_scale, height * pixel_scale,
 	    SDL_WINDOW_SHOWN | SDL_WINDOW_UTILITY);
+	// Create renderer
 	SDL_Renderer *renderer =
 	    SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
+	// Create texture
 	SDL_Texture *texture =
 	    SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
 			      SDL_TEXTUREACCESS_STREAMING, 8, 8);
 	create_texture(input_buff, texture);
 
+	// Initializing framerate-related variables
 	unsigned int a = SDL_GetTicks();
 	unsigned int b = SDL_GetTicks();
 	double delta = 0;
 
+	// Rectangle to apply texture to
 	SDL_Rect dst;
 	dst.x = 0;
 	dst.y = 0;
 	dst.w = pixel_scale * 8;
 	dst.h = pixel_scale * 8;
 
+	// Window display loop
 	bool keep_window_open = true;
 	while (keep_window_open) {
-
 		SDL_Event e;
 		while (SDL_PollEvent(&e) > 0) {
 			switch (e.type) {
@@ -187,15 +200,18 @@ void show_sprite(uint16_t *input_buff) {
 			}
 		}
 
+		// Draw 60 times per second
 		a = SDL_GetTicks();
 		delta = a - b;
-
 		if (delta > 1000 / 60.0) {
+			// Clear screen
 			SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 			SDL_RenderClear(renderer);
 
+			// Render copy of texture on rectangle dst
 			SDL_RenderCopy(renderer, texture, NULL, &dst);
 
+			// Show the thing
 			SDL_RenderPresent(renderer);
 		}
 	}
@@ -218,10 +234,11 @@ int main(int argc, char *argv[]) {
 	// Reading from file
 	uint32_t bytes = 0;
 	if (strcmp(argv[1], "-b") == 0)
-		bytes = read_bytes(bytes_input, buff, 8, 8);
+		bytes = read_bytes(bytes_input, buff, 8, 8, 0);
 	else
 		bytes = read_(file, buff, end, start);
 
+	// Display read bytes
 	if (bytes != 0) {
 		if (strcmp(argv[1], "-b") == 0)
 			printf("Read %d bytes:\n", bytes);
@@ -239,18 +256,23 @@ int main(int argc, char *argv[]) {
 
 	join_all(buff, buff_image, end / 2);
 
+	// Display joined values
 	for (uint32_t i = 0; i < end / 2; i++) {
 		printf("0x%04x, ", buff_image[i]);
 	}
 
 	printf("\nColor palette:\n ░▒▓\n");
 
+	// Print sprite to stdout
 	print_sprite(buff_image, end / 2);
 
+	// Draw if just 8x8 sprite is read
 	if (end / 2 == 8)
 		show_sprite(buff_image);
 
-	// free(filename);
+	// Freeing everything
+	if (filename)
+		free(filename);
 	free(bytes_input);
 	free(buff);
 	if (file)

@@ -124,23 +124,7 @@ uint8_t parse_arguments(int argc, char *argv[]) {
 	return true;
 }
 
-void show_sprite(uint16_t *input_buff) {
-	// Init window
-	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-		printf("Failed to initialize the SDL2 library\n");
-		return;
-	}
-	SDL_Window *window = SDL_CreateWindow(
-	    "sprite_display", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-	    width * pixel_scale, height * pixel_scale,
-	    SDL_WINDOW_SHOWN | SDL_WINDOW_UTILITY);
-	SDL_Renderer *renderer =
-	    SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
-	SDL_Texture *texture =
-	    SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
-			      SDL_TEXTUREACCESS_STREAMING, 8, 8);
-
+void create_texture(uint16_t *input_buff, SDL_Texture *texture) {
 	uint8_t *pixels;
 	int pitch;
 
@@ -161,6 +145,25 @@ void show_sprite(uint16_t *input_buff) {
 	}
 
 	SDL_UnlockTexture(texture);
+}
+
+void show_sprite(uint16_t *input_buff) {
+	// Init window
+	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+		printf("Failed to initialize the SDL2 library\n");
+		return;
+	}
+	SDL_Window *window = SDL_CreateWindow(
+	    "sprite_display", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+	    width * pixel_scale, height * pixel_scale,
+	    SDL_WINDOW_SHOWN | SDL_WINDOW_UTILITY);
+	SDL_Renderer *renderer =
+	    SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+	SDL_Texture *texture =
+	    SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
+			      SDL_TEXTUREACCESS_STREAMING, 8, 8);
+	create_texture(input_buff, texture);
 
 	unsigned int a = SDL_GetTicks();
 	unsigned int b = SDL_GetTicks();

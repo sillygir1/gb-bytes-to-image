@@ -1,0 +1,1 @@
+gcc bytes_to_image.c tile.c -lSDL2 -lSDL2main -o bytes_to_image

@@ -29,7 +29,7 @@ uint16_t join_bytes(uint8_t byte1, uint8_t byte2) {
 }
 
 void join_all(uint8_t *input_buff, uint16_t *output_buff, uint32_t length) {
-	for (uint32_t i = 0; i < length; i++) {
+	for (uint64_t i = 0; i < length; i++) {
 		output_buff[i] =
 		    join_bytes(input_buff[2 * i], input_buff[2 * i + 1]);
 	}

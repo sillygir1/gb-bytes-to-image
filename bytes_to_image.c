@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
 	// Reading from file
 	uint32_t bytes = 0;
 	if (strcmp(argv[1], "-b") == 0)
-		bytes = read_bytes(bytes_input, buff, 16, 0);
+		bytes = read_bytes(bytes_input, buff, end, 0);
 	else
 		bytes = read_(file, buff, end, start);
 

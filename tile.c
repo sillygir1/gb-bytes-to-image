@@ -1,6 +1,6 @@
 #include "tile.h"
 
-uint8_t colors[4] = {0x00, 0x67, 0xb6, 0xff};
+uint8_t colors[4] = {0xff, 0xb6, 0x67, 0x00};
 
 uint32_t read_bytes(uint8_t *bytes, uint8_t *buff, uint32_t n,
 		    uint32_t start_offset) {

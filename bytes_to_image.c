@@ -144,7 +144,7 @@ void show_tile(uint16_t *input_buff) {
 		delta = a - b;
 		if (delta > 1000 / 60.0) {
 			// Clear screen
-			SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 			SDL_RenderClear(renderer);
 
 			// Render copy of texture on rectangle dst

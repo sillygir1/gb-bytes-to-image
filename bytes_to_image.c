@@ -113,7 +113,7 @@ void show_tile(uint16_t *input_buff) {
 	SDL_Texture *texture =
 	    SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
 			      SDL_TEXTUREACCESS_STREAMING, 8, 8);
-	create_texture(input_buff, texture);
+	create_texture(input_buff, texture, NULL);
 
 	// Initializing framerate-related variables
 	unsigned int a = SDL_GetTicks();

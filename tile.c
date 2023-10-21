@@ -1,6 +1,9 @@
 #include "tile.h"
 
-uint8_t colors[4] = {0xff, 0xb6, 0x67, 0x00};
+uint8_t default_colors[4][3] = {{0x00, 0x00, 0x00},
+				{0x67, 0x67, 0x67},
+				{0xb6, 0xb6, 0xb6},
+				{0xff, 0xff, 0xff}};
 
 uint32_t read_bytes(uint8_t *bytes, uint8_t *buff, uint32_t n,
 		    uint32_t start_offset) {
@@ -35,9 +38,14 @@ void join_all(uint8_t *input_buff, uint16_t *output_buff, uint32_t length) {
 	}
 }
 
-void create_texture(uint16_t *input_buff, SDL_Texture *texture) {
+void create_texture(uint16_t *input_buff, SDL_Texture *texture,
+		    uint8_t color_palette[4][3]) {
 	uint8_t *pixels;
 	int pitch;
+
+	if (color_palette == NULL) {
+		color_palette = default_colors;
+	}
 
 	SDL_LockTexture(texture, NULL, (void **)&pixels, &pitch);
 
@@ -47,9 +55,10 @@ void create_texture(uint16_t *input_buff, SDL_Texture *texture) {
 			for (uint8_t k = 0; k < 4; k++) {
 				if (k != 0)
 					pixels[k + 4 * (8 * i + j)] =
-					    colors[(input_buff[i] &
-						    (0b11 << (j * 2))) >>
-						   (j * 2)];
+					    default_colors[(input_buff[i] &
+							    (0b11
+							     << (j * 2))) >>
+							   (j * 2)][k - 1];
 				else
 					pixels[k + 4 * (8 * i + j)] = 0;
 			}
@@ -60,14 +69,14 @@ void create_texture(uint16_t *input_buff, SDL_Texture *texture) {
 }
 
 // Get texture from byte array
-bool get_tile(uint8_t *input_buff, SDL_Texture *texture,
-	      uint32_t start_offset) {
+bool get_tile(uint8_t *input_buff, SDL_Texture *texture, uint32_t start_offset,
+	      uint8_t color_palette[4][3]) {
 	uint8_t buff[16];
 	uint16_t tile_buff[8];
 	if (!read_bytes(input_buff, buff, 16, start_offset)) {
 		return false;
 	}
 	join_all(buff, tile_buff, 8);
-	create_texture(tile_buff, texture);
+	create_texture(tile_buff, texture, color_palette);
 	return true;
 }

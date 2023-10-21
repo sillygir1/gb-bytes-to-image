@@ -25,11 +25,13 @@ void join_all(uint8_t *input_buff, uint16_t *output_buff, uint32_t length);
 /// @brief Create texture from buffer
 /// @param input_buff Input buffer
 /// @param texture Texture
-void create_texture(uint16_t *input_buff, SDL_Texture *texture);
+void create_texture(uint16_t *input_buff, SDL_Texture *texture,
+		    uint8_t color_palette[4][3]);
 
 /// @brief Load tile data into SDL texture
 /// @param input_buff Input buffer
 /// @param texture Texture
 /// @param start_offset Beginning offset
 /// @return Is read
-bool get_tile(uint8_t *input_buff, SDL_Texture *texture, uint32_t start_offset);
+bool get_tile(uint8_t *input_buff, SDL_Texture *texture, uint32_t start_offset,
+	      uint8_t color_palette[4][3]);

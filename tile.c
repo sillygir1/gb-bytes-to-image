@@ -55,10 +55,9 @@ void create_texture(uint16_t *input_buff, SDL_Texture *texture,
 			for (uint8_t k = 0; k < 4; k++) {
 				if (k != 0)
 					pixels[k + 4 * (8 * i + j)] =
-					    default_colors[(input_buff[i] &
-							    (0b11
-							     << (j * 2))) >>
-							   (j * 2)][k - 1];
+					    color_palette[(input_buff[i] &
+							   (0b11 << (j * 2))) >>
+							  (j * 2)][k - 1];
 				else
 					pixels[k + 4 * (8 * i + j)] = 0;
 			}

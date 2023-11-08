@@ -24,8 +24,8 @@ uint32_t read_bytes(uint8_t *bytes, uint8_t *buff, uint32_t n,
 uint16_t join_bytes(uint8_t byte1, uint8_t byte2) {
 	uint16_t out = 0;
 	for (uint8_t i = 0; i < 8; i++) {
-		out += ((((byte1 & (1 << i)) >> (i)) << 1) +
-			((byte2 & (1 << i)) >> (i)))
+		out += ((((byte2 & (1 << i)) >> (i)) << 1) +
+			((byte1 & (1 << i)) >> (i)))
 		       << (14 - 2 * i);
 	}
 	return out;
